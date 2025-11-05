@@ -1,0 +1,7 @@
+com/global/lbc/features/human/experience/ExperieceRecordModel.class
+com/global/lbc/features/user/UserRecordModel.class
+com/global/lbc/features/human/resources/TypeOfContractEnum.class
+com/global/lbc/features/vacation/order/VacationRequestModel.class
+com/global/lbc/features/human/resources/EmployeeRoleEnum.class
+com/global/lbc/features/vacation/order/VacationStatusEnum.class
+com/global/lbc/features/human/resources/EmployeeRecordModel.class
