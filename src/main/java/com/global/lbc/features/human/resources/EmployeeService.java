@@ -6,8 +6,11 @@ import com.global.lbc.util.PaginatedResponse;
 import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -15,12 +18,14 @@ import java.util.UUID;
 /**
  * Service layer for Employee business logic and validation.
  * Handles complex operations, validations, and business rules for employee management.
+ * Implements Soft Delete pattern for data retention and audit compliance.
  */
 @ApplicationScoped
 public class EmployeeService {
 
     private static final int DEFAULT_PAGE_SIZE = 50;
     private static final int MAX_PAGE_SIZE = 100;
+    private static final int PURGE_DAYS_THRESHOLD = 30; // Dias mínimos para purge (GDPR)
 
     // ========== PAGINAÇÃO E LISTAGEM ==========
 
@@ -136,7 +141,7 @@ public class EmployeeService {
         if (contractType == null) {
             throw new IllegalArgumentException("Tipo de contrato não pode ser nulo");
         }
-        return EmployeeRecordModel.list("contractRole", contractType);
+        return EmployeeRecordModel.list("contractRole = ?1 AND isActive = true", contractType);
     }
 
     // ========== VALIDAÇÕES DE UNICIDADE ==========
@@ -276,40 +281,223 @@ public class EmployeeService {
         return existing;
     }
 
+    // ========== SOFT DELETE OPERATIONS ==========
+
     /**
      * Deactivates an employee (soft delete).
+     * This is the default delete operation - preserves data for audit and recovery.
+     *
+     * @param id        Employee ID
+     * @param deletedBy Username or identifier of who performed the deletion
+     * @throws NotFoundException    if employee not found
+     * @throws BadRequestException if employee already deleted or has active subordinates
+     */
+    @Transactional
+    public void deactivateEmployee(UUID id, String deletedBy) {
+        EmployeeRecordModel employee = EmployeeRecordModel.findById(id);
+
+        if (employee == null) {
+            throw new NotFoundException("Empregado não encontrado: " + id);
+        }
+
+        if (employee.isDeleted()) {
+            throw new BadRequestException("Empregado já foi deletado");
+        }
+
+        // Verifica se é gerente com subordinados ativos
+        if (employee.isManager()) {
+            long activeSubordinates = EmployeeRecordModel.countActiveSubordinates(id);
+            if (activeSubordinates > 0) {
+                throw new BadRequestException(
+                        "Não é possível deletar gerente com subordinados ativos. " +
+                                "Reatribua os subordinados primeiro."
+                );
+            }
+        }
+
+        // Define deletedBy como "system" se não fornecido
+        String userIdentifier = (deletedBy != null && !deletedBy.isBlank())
+                ? deletedBy
+                : "system";
+
+        employee.softDelete(userIdentifier);
+        employee.terminationDate = LocalDate.now();
+        employee.persist();
+    }
+
+    /**
+     * Deactivates an employee (soft delete) - overload without deletedBy parameter.
+     * Uses "system" as default user.
      *
      * @param id Employee ID
      */
     @Transactional
     public void deactivateEmployee(UUID id) {
-        EmployeeRecordModel employee = EmployeeRecordModel.findById(id);
-        if (employee == null) {
-            throw new IllegalArgumentException("Empregado não encontrado: " + id);
-        }
-
-        employee.isActive = false;
-        employee.terminationDate = LocalDate.now();
+        deactivateEmployee(id, "system");
     }
 
     /**
-     * Permanently deletes an employee.
+     * Alias for deactivateEmployee - maintains backward compatibility.
+     * This is now the default delete operation (soft delete).
+     *
+     * @param id        Employee ID
+     * @param deletedBy Username or identifier of who performed the deletion
+     */
+    @Transactional
+    public void deleteEmployee(UUID id, String deletedBy) {
+        deactivateEmployee(id, deletedBy);
+    }
+
+    /**
+     * Alias for deactivateEmployee - maintains backward compatibility.
+     * Uses "system" as default user.
      *
      * @param id Employee ID
      */
     @Transactional
     public void deleteEmployee(UUID id) {
-        EmployeeRecordModel employee = EmployeeRecordModel.findById(id);
+        deactivateEmployee(id, "system");
+    }
+
+    /**
+     * Restaura um empregado soft-deleted.
+     * Reativa o registro e limpa os campos de deleção.
+     *
+     * @param id Employee ID
+     * @throws NotFoundException   if employee not found
+     * @throws BadRequestException if employee is not deleted
+     */
+    @Transactional
+    public void restoreEmployee(UUID id) {
+        EmployeeRecordModel employee = EmployeeRecordModel.findByIdIncludingDeleted(id);
+
         if (employee == null) {
-            throw new IllegalArgumentException("Empregado não encontrado: " + id);
+            throw new NotFoundException("Empregado não encontrado: " + id);
         }
 
-        // Check if employee is a manager
-        if (employee.isManager()) {
-            throw new IllegalArgumentException("Não é possível excluir um empregado que é gerente. Reatribua os subordinados primeiro.");
+        if (!employee.isDeleted()) {
+            throw new BadRequestException("Empregado não está deletado");
         }
 
-        employee.delete();
+        employee.restore();
+        employee.terminationDate = null; // Remove termination date on restore
+        employee.persist();
+    }
+
+    /**
+     * Hard delete (purge) - permanently removes employee from database.
+     * Only for GDPR compliance or administrative cleanup.
+     * Requires employee to be soft-deleted for at least PURGE_DAYS_THRESHOLD days.
+     *
+     * @param id Employee ID
+     * @throws NotFoundException   if employee not found
+     * @throws BadRequestException if purge conditions not met
+     */
+    @Transactional
+    public void purgeEmployee(UUID id) {
+        EmployeeRecordModel employee = EmployeeRecordModel.findByIdIncludingDeleted(id);
+
+        if (employee == null) {
+            throw new NotFoundException("Empregado não encontrado: " + id);
+        }
+
+        // Validação: deve estar soft-deleted
+        if (!employee.isDeleted()) {
+            throw new BadRequestException(
+                    "Apenas registros soft-deleted podem ser purgados. " +
+                            "Execute soft delete primeiro."
+            );
+        }
+
+        // Validação: deve estar deletado há mais de PURGE_DAYS_THRESHOLD dias
+        if (employee.deletedAt == null ||
+                employee.deletedAt.isAfter(LocalDateTime.now().minusDays(PURGE_DAYS_THRESHOLD))) {
+            throw new BadRequestException(
+                    String.format(
+                            "Apenas registros deletados há mais de %d dias podem ser purgados. " +
+                                    "Data de deleção: %s",
+                            PURGE_DAYS_THRESHOLD,
+                            employee.deletedAt != null ? employee.deletedAt.toString() : "N/A"
+                    )
+            );
+        }
+
+        // Validação: não pode ter subordinados (mesmo inativos)
+        long totalSubordinates = EmployeeRecordModel.count("manager.id = ?1", id);
+        if (totalSubordinates > 0) {
+            throw new BadRequestException(
+                    "Não é possível purgar empregado com subordinados no histórico. " +
+                            "Reatribua os subordinados primeiro."
+            );
+        }
+
+        employee.delete(); // Hard delete
+    }
+
+    /**
+     * Lista todos os empregados deletados (soft delete).
+     * Método administrativo para visualizar registros deletados.
+     *
+     * @return Lista de empregados deletados
+     */
+    public List<EmployeeRecordModel> getDeletedEmployees() {
+        return EmployeeRecordModel.findAllDeleted();
+    }
+
+    /**
+     * Lista empregados deletados com paginação.
+     *
+     * @param page Page number
+     * @param size Page size
+     * @return Paginated response with deleted employees
+     */
+    public PaginatedResponse<EmployeeRecordModel> getDeletedEmployees(int page, int size) {
+        validatePagination(page, size);
+
+        var query = EmployeeRecordModel.find("isActive = false", Sort.by("deletedAt").descending())
+                .page(page, size);
+        long totalItems = EmployeeRecordModel.count("isActive = false");
+        int totalPages = (int) Math.ceil((double) totalItems / size);
+
+        return new PaginatedResponse<>(
+                query.list(),
+                totalItems,
+                totalPages,
+                page
+        );
+    }
+
+    /**
+     * Busca empregados deletados em um período específico.
+     *
+     * @param startDate Data inicial
+     * @param endDate   Data final
+     * @return Lista de empregados deletados no período
+     */
+    public List<EmployeeRecordModel> getDeletedEmployeesBetween(LocalDateTime startDate, LocalDateTime endDate) {
+        if (startDate == null || endDate == null) {
+            throw new IllegalArgumentException("Datas não podem ser nulas");
+        }
+
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Data inicial não pode ser posterior à data final");
+        }
+
+        return EmployeeRecordModel.findDeletedBetween(startDate, endDate);
+    }
+
+    /**
+     * Busca empregados deletados por um usuário específico.
+     *
+     * @param deletedBy Username do usuário
+     * @return Lista de empregados deletados pelo usuário
+     */
+    public List<EmployeeRecordModel> getDeletedEmployeesByUser(String deletedBy) {
+        if (deletedBy == null || deletedBy.isBlank()) {
+            throw new IllegalArgumentException("Username não pode ser vazio");
+        }
+
+        return EmployeeRecordModel.findDeletedBy(deletedBy);
     }
 
     // ========== GESTÃO DE HIERARQUIA ==========
@@ -552,7 +740,8 @@ public class EmployeeService {
                 "isActive",
                 "createdAt",
                 "dateOfBirth",
-                "salaryBase"
+                "salaryBase",
+                "deletedAt" // Adicionado para ordenação de deletados
         ).contains(field);
     }
 
@@ -574,13 +763,22 @@ public class EmployeeService {
     }
 
     /**
+     * Gets total count of deleted employees.
+     *
+     * @return Count of deleted employees
+     */
+    public long countDeletedEmployees() {
+        return EmployeeRecordModel.count("isActive = false");
+    }
+
+    /**
      * Gets total count of employees by role.
      *
      * @param role Employee role
      * @return Count of employees with specified role
      */
     public long countByRole(EmployeeRoleEnum role) {
-        return EmployeeRecordModel.count("employeeRole = ?1", role);
+        return EmployeeRecordModel.count("employeeRole = ?1 AND isActive = true", role);
     }
 
     /**
@@ -590,7 +788,7 @@ public class EmployeeService {
      * @return Count of employees with specified contract type
      */
     public long countByContractType(TypeOfContractEnum contractType) {
-        return EmployeeRecordModel.count("contractRole = ?1", contractType);
+        return EmployeeRecordModel.count("contractRole = ?1 AND isActive = true", contractType);
     }
 
     /**
@@ -609,6 +807,6 @@ public class EmployeeService {
             throw new IllegalArgumentException("Data inicial não pode ser posterior à data final");
         }
 
-        return EmployeeRecordModel.list("hireDate >= ?1 and hireDate <= ?2", startDate, endDate);
+        return EmployeeRecordModel.list("hireDate >= ?1 AND hireDate <= ?2 AND isActive = true", startDate, endDate);
     }
 }

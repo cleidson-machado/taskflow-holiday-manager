@@ -16,6 +16,7 @@ import java.util.UUID;
 /**
  * REST Resource for Employee management.
  * Provides CRUD operations and search capabilities for employees.
+ * Implements Soft Delete pattern as default deletion strategy.
  *
  * Base path: /employees
  */
@@ -370,6 +371,8 @@ public class EmployeeRecordResource {
 
     /**
      * Deactivates an employee (soft delete).
+     * This endpoint is maintained for backward compatibility.
+     * Consider using DELETE /employees/{id} instead, which now performs soft delete by default.
      *
      * Example: PATCH /employees/123e4567-e89b-12d3-a456-426614174000/deactivate
      *
@@ -386,6 +389,14 @@ public class EmployeeRecordResource {
             return Response.ok()
                     .entity(new SuccessResponse("Empregado desativado com sucesso"))
                     .build();
+        } catch (NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        } catch (BadRequestException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorResponse(e.getMessage()))
@@ -394,12 +405,16 @@ public class EmployeeRecordResource {
     }
 
     /**
-     * Permanently deletes an employee.
+     * Deletes an employee (soft delete by default).
+     * This operation now performs a soft delete, preserving data for audit and recovery.
+     * The employee is marked as inactive and can be restored later if needed.
+     *
+     * For permanent deletion (hard delete), use the /purge endpoint (admin only).
      *
      * Example: DELETE /employees/123e4567-e89b-12d3-a456-426614174000
      *
      * @param idStr Employee UUID
-     * @return Response with no content or error
+     * @return Response with success message
      */
     @DELETE
     @Path("/{id}")
@@ -408,7 +423,17 @@ public class EmployeeRecordResource {
         try {
             UUID id = UUID.fromString(idStr);
             employeeService.deleteEmployee(id);
-            return Response.noContent().build();
+            return Response.ok()
+                    .entity(new SuccessResponse("Empregado deletado com sucesso (soft delete)"))
+                    .build();
+        } catch (NotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        } catch (BadRequestException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorResponse(e.getMessage()))
@@ -486,8 +511,9 @@ public class EmployeeRecordResource {
     @Path("/stats")
     public Response getStatistics() {
         long totalActive = employeeService.countActiveEmployees();
+        long totalDeleted = employeeService.countDeletedEmployees();
         return Response.ok()
-                .entity(new StatsResponse(totalActive))
+                .entity(new StatsResponse(totalActive, totalDeleted))
                 .build();
     }
 
@@ -511,5 +537,5 @@ public class EmployeeRecordResource {
     /**
      * Statistics response.
      */
-    public record StatsResponse(long totalActiveEmployees) {}
+    public record StatsResponse(long totalActiveEmployees, long totalDeletedEmployees) {}
 }
