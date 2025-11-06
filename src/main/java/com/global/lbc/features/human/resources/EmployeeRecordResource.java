@@ -325,14 +325,14 @@ public class EmployeeRecordResource {
      * Example: POST /employees
      * Body: { "name": "João", "surname": "Silva", ... }
      *
-     * @param employee Employee data
+     * @param dto Employee request DTO
      * @return Response with created employee
      */
     @POST
     @Transactional
-    public Response create(@Valid EmployeeRecordModel employee) {
+    public Response create(@Valid EmployeeRequestDTO dto) {
         try {
-            EmployeeRecordModel created = employeeService.createEmployee(employee);
+            EmployeeRecordModel created = employeeService.createEmployee(dto);
             return Response.status(Response.Status.CREATED)
                     .entity(created)
                     .build();
@@ -350,16 +350,16 @@ public class EmployeeRecordResource {
      * Body: { "name": "João", "surname": "Silva", ... }
      *
      * @param idStr Employee UUID
-     * @param employee Updated employee data
+     * @param dto Updated employee data
      * @return Response with updated employee
      */
     @PUT
     @Path("/{id}")
     @Transactional
-    public Response update(@PathParam("id") String idStr, @Valid EmployeeRecordModel employee) {
+    public Response update(@PathParam("id") String idStr, @Valid EmployeeRequestDTO dto) {
         try {
             UUID id = UUID.fromString(idStr);
-            EmployeeRecordModel updated = employeeService.updateEmployee(id, employee);
+            EmployeeRecordModel updated = employeeService.updateEmployee(id, dto);
             return Response.ok(updated).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)

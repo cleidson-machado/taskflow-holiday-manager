@@ -228,13 +228,16 @@ public class EmployeeService {
     // ========== OPERAÇÕES DE CRIAÇÃO E ATUALIZAÇÃO ==========
 
     /**
-     * Creates a new employee with validation.
+     * Creates a new employee from DTO with validation.
      *
-     * @param employee Employee to create
+     * @param dto Employee request DTO
      * @return Created employee
      */
     @Transactional
-    public EmployeeRecordModel createEmployee(EmployeeRecordModel employee) {
+    public EmployeeRecordModel createEmployee(EmployeeRequestDTO dto) {
+        // Converter DTO para Entity
+        EmployeeRecordModel employee = convertDtoToEntity(dto);
+
         validateEmployeeData(employee);
         validateUniqueIdentifiers(employee.fiscalNumber, employee.socialNumber, null);
 
@@ -247,41 +250,28 @@ public class EmployeeService {
     }
 
     /**
-     * Updates an existing employee with validation.
+     * Updates an existing employee from DTO with validation.
      *
-     * @param id       Employee ID
-     * @param employee Updated employee data
+     * @param id  Employee ID
+     * @param dto Updated employee data
      * @return Updated employee
      */
     @Transactional
-    public EmployeeRecordModel updateEmployee(UUID id, EmployeeRecordModel employee) {
+    public EmployeeRecordModel updateEmployee(UUID id, EmployeeRequestDTO dto) {
         EmployeeRecordModel existing = EmployeeRecordModel.findById(id);
         if (existing == null) {
             throw new IllegalArgumentException("Empregado não encontrado: " + id);
         }
 
-        validateEmployeeData(employee);
-        validateUniqueIdentifiers(employee.fiscalNumber, employee.socialNumber, id);
+        // Converter DTO para dados atualizados
+        updateEntityFromDto(existing, dto);
 
-        if (employee.manager != null) {
-            validateManagerAssignment(id, employee.manager.id);
+        validateEmployeeData(existing);
+        validateUniqueIdentifiers(existing.fiscalNumber, existing.socialNumber, id);
+
+        if (existing.manager != null) {
+            validateManagerAssignment(id, existing.manager.id);
         }
-
-        // Update fields
-        existing.name = employee.name;
-        existing.surname = employee.surname;
-        existing.fiscalNumber = employee.fiscalNumber;
-        existing.socialNumber = employee.socialNumber;
-        existing.dateOfBirth = employee.dateOfBirth;
-        existing.contractRole = employee.contractRole;
-        existing.employeeRole = employee.employeeRole;
-        existing.hireDate = employee.hireDate;
-        existing.terminationDate = employee.terminationDate;
-        existing.isActive = employee.isActive;
-        existing.salaryBase = employee.salaryBase;
-        existing.manager = employee.manager;
-        existing.vacationDaysBalance = employee.vacationDaysBalance;
-        existing.vacationDaysUsed = employee.vacationDaysUsed;
 
         return existing;
     }
@@ -388,6 +378,94 @@ public class EmployeeService {
      */
     public List<EmployeeRecordModel> getTopLevelEmployees() {
         return EmployeeRecordModel.findTopLevelEmployees();
+    }
+
+    // ========== CONVERSÃO DTO <-> ENTITY ==========
+
+    /**
+     * Converts DTO to Entity for creation.
+     *
+     * @param dto Employee request DTO
+     * @return Employee entity
+     */
+    private EmployeeRecordModel convertDtoToEntity(EmployeeRequestDTO dto) {
+        EmployeeRecordModel employee = new EmployeeRecordModel();
+
+        employee.name = dto.getName();
+        employee.surname = dto.getSurname();
+        employee.fiscalNumber = FiscalNumber.of(dto.getFiscalNumber());
+        employee.socialNumber = SocialNumber.of(dto.getSocialNumber());
+        employee.dateOfBirth = dto.getDateOfBirth();
+        employee.contractRole = dto.getContractRole();
+        employee.employeeRole = dto.getEmployeeRole();
+        employee.hireDate = dto.getHireDate();
+        employee.terminationDate = dto.getTerminationDate();
+        employee.isActive = dto.getIsActive();
+
+        // Conversão BigDecimal -> Float
+        employee.salaryBase = dto.getSalaryBase() != null ? dto.getSalaryBase().floatValue() : null;
+
+        // Conversão Integer -> Long
+        employee.vacationDaysBalance = dto.getVacationDaysBalance() != null
+                ? dto.getVacationDaysBalance().longValue()
+                : 22L;
+        employee.vacationDaysUsed = dto.getVacationDaysUsed() != null
+                ? dto.getVacationDaysUsed().longValue()
+                : 0L;
+
+        // Atribuir manager se fornecido
+        if (dto.getManagerId() != null && !dto.getManagerId().isBlank()) {
+            UUID managerId = UUID.fromString(dto.getManagerId());
+            employee.manager = EmployeeRecordModel.findById(managerId);
+
+            if (employee.manager == null) {
+                throw new IllegalArgumentException("Gerente não encontrado com ID: " + dto.getManagerId());
+            }
+        }
+
+        return employee;
+    }
+
+    /**
+     * Updates existing entity from DTO.
+     *
+     * @param existing Existing employee entity
+     * @param dto      Employee request DTO
+     */
+    private void updateEntityFromDto(EmployeeRecordModel existing, EmployeeRequestDTO dto) {
+        existing.name = dto.getName();
+        existing.surname = dto.getSurname();
+        existing.fiscalNumber = FiscalNumber.of(dto.getFiscalNumber());
+        existing.socialNumber = SocialNumber.of(dto.getSocialNumber());
+        existing.dateOfBirth = dto.getDateOfBirth();
+        existing.contractRole = dto.getContractRole();
+        existing.employeeRole = dto.getEmployeeRole();
+        existing.hireDate = dto.getHireDate();
+        existing.terminationDate = dto.getTerminationDate();
+        existing.isActive = dto.getIsActive();
+
+        // Conversão BigDecimal -> Float
+        existing.salaryBase = dto.getSalaryBase() != null ? dto.getSalaryBase().floatValue() : null;
+
+        // Conversão Integer -> Long
+        existing.vacationDaysBalance = dto.getVacationDaysBalance() != null
+                ? dto.getVacationDaysBalance().longValue()
+                : existing.vacationDaysBalance;
+        existing.vacationDaysUsed = dto.getVacationDaysUsed() != null
+                ? dto.getVacationDaysUsed().longValue()
+                : existing.vacationDaysUsed;
+
+        // Atualizar manager
+        if (dto.getManagerId() != null && !dto.getManagerId().isBlank()) {
+            UUID managerId = UUID.fromString(dto.getManagerId());
+            existing.manager = EmployeeRecordModel.findById(managerId);
+
+            if (existing.manager == null) {
+                throw new IllegalArgumentException("Gerente não encontrado com ID: " + dto.getManagerId());
+            }
+        } else {
+            existing.manager = null;
+        }
     }
 
     // ========== VALIDAÇÕES PRIVADAS ==========

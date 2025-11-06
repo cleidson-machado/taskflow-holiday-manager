@@ -1,4 +1,5 @@
 com/global/lbc/features/human/experience/ExperieceRecordModel.class
+com/global/lbc/features/human/resources/EmployeeRequestDTO.class
 com/global/lbc/util/PersistenceExceptionMapper.class
 com/global/lbc/features/human/resources/EmployeeRecordResource$EmployeeResponse.class
 com/global/lbc/features/human/resources/EmployeeRecordResource$StatsResponse.class
