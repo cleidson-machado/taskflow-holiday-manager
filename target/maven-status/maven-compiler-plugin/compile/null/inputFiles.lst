@@ -2,9 +2,17 @@
 /Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/MyEntity.java
 /Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/features/human/experience/ExperieceRecordModel.java
 /Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/features/human/resources/EmployeeRecordModel.java
+/Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/features/human/resources/EmployeeRecordResource.java
 /Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/features/human/resources/EmployeeRoleEnum.java
+/Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/features/human/resources/EmployeeService.java
 /Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/features/human/resources/TypeOfContractEnum.java
+/Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/features/human/resources/domain/FiscalNumber.java
+/Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/features/human/resources/domain/FiscalNumberConverter.java
+/Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/features/human/resources/domain/SocialNumber.java
+/Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/features/human/resources/domain/SocialNumberConverter.java
 /Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/features/user/UserRecordModel.java
 /Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/features/vacation/order/VacationRequestModel.java
 /Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/features/vacation/order/VacationStatusEnum.java
 /Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/features/vacation/reservation/VacationReservationModel.java
+/Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/util/PaginatedResponse.java
+/Users/cleidson/DEV_PESSOAL/Desafios_cod/LBC_back_front/taskflow-holiday-manager/src/main/java/com/global/lbc/util/PersistenceExceptionMapper.java

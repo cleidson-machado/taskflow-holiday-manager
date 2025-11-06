@@ -1,5 +1,7 @@
 package com.global.lbc.features.human.resources;
 
+import com.global.lbc.features.human.resources.domain.FiscalNumber;
+import com.global.lbc.features.human.resources.domain.SocialNumber;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 
@@ -31,10 +33,10 @@ public class EmployeeRecordModel extends PanacheEntityBase {
     public String surname;
 
     @Column(name = "fiscal_number", unique = true, length = 20)
-    public String fiscalNumber;
+    public FiscalNumber fiscalNumber;
 
     @Column(name = "social_number", unique = true, length = 20)
-    public String socialNumber;
+    public SocialNumber socialNumber;
 
     @Column(name = "date_of_birth")
     public LocalDate dateOfBirth;
