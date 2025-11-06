@@ -54,21 +54,15 @@ INSERT INTO employee_record (id, name, surname, fiscal_number, social_number, da
 -- COMENTÁRIOS SOBRE OS DADOS DE TESTE
 -- ========================================
 --
--- HIERARQUIA ORGANIZACIONAL:
+-- EMPREGADOS (SEM HIERARQUIA NO MOMENTO):
+-- - 2 ADMIN: Fernando Sousa (CEO), Patrícia Lopes (CTO)
+-- - 2 MANAGER: Rui Mendes (Gerente de Operações), Catarina Ribeiro (Gerente de TI)
+-- - 3 EMPLOYEE: Tiago Nunes (Desenvolvedor), Joana Pinto (Analista), Luís Gomes (Assistente - Part-time)
 --
--- Fernando Sousa (CEO - ADMIN)
--- ├── Rui Mendes (Gerente de Operações - MANAGER)
--- │   └── Luís Gomes (Assistente Administrativo - EMPLOYEE)
---
--- Patrícia Lopes (CTO - ADMIN)
--- └── Catarina Ribeiro (Gerente de TI - MANAGER)
---     ├── Tiago Nunes (Desenvolvedor - EMPLOYEE)
---     └── Joana Pinto (Analista - EMPLOYEE)
---
--- PROPORÇÃO:
--- - 2 ADMIN (Fernando Sousa, Patrícia Lopes)
--- - 2 MANAGER (Rui Mendes, Catarina Ribeiro)
--- - 3 EMPLOYEE (Tiago Nunes, Joana Pinto, Luís Gomes)
+-- OBSERVAÇÕES:
+-- - Todos os empregados estão sem gerente (manager_id = NULL)
+-- - A hierarquia gerencial pode ser implementada futuramente
+-- - Luís Gomes é part-time (11 dias de férias vs 22 dos full-time)
 --
 -- USUÁRIOS:
 -- - 10 usuários de teste criados
