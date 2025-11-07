@@ -1,6 +1,6 @@
 package com.global.lbc.features.user;
 
-import com.global.lbc.features.human.resources.EmployeeRecordModel;
+import com.global.lbc.features.human.resources.domain.model.Employee;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 
@@ -43,14 +43,14 @@ public class UserRecordModel extends PanacheEntityBase {
 
     // ========== RELACIONAMENTO COM EMPREGADO (OPCIONAL) ==========
     /**
-     * Optional one-to-one relationship with EmployeeRecordModel.
+     * Optional one-to-one relationship with Employee.
      * A user can be associated with an employee, but this is not mandatory.
      * Users and employees can be registered independently and linked later.
      * Uses LAZY loading to avoid unnecessary data fetching.
      */
     @OneToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "employee_id", unique = true, foreignKey = @ForeignKey(name = "fk_user_employee"))
-    public EmployeeRecordModel employee;
+    public Employee employee;
 
     // ========== CONTROLE DE CONTA ==========
     @Column(name = "is_active", nullable = false, columnDefinition = "BOOLEAN DEFAULT true")
@@ -185,7 +185,7 @@ public class UserRecordModel extends PanacheEntityBase {
      *
      * @param employee The employee to associate with this user.
      */
-    public void associateEmployee(EmployeeRecordModel employee) {
+    public void associateEmployee(Employee employee) {
         this.employee = employee;
     }
 

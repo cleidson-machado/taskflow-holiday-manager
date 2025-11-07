@@ -1,7 +1,8 @@
 package com.global.lbc.features.human.resources;
 
-import com.global.lbc.features.human.resources.domain.FiscalNumber;
-import com.global.lbc.features.human.resources.domain.SocialNumber;
+import com.global.lbc.features.human.resources.domain.model.FiscalNumber;
+import com.global.lbc.features.human.resources.domain.model.SocialNumber;
+import com.global.lbc.features.human.resources.domain.model.Employee;
 import com.global.lbc.util.PaginatedResponse;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -54,11 +55,11 @@ public class EmployeeRecordResource {
     ) {
         try {
             if (page != null && size != null) {
-                PaginatedResponse<EmployeeRecordModel> pagedResponse =
+                PaginatedResponse<Employee> pagedResponse =
                         employeeService.getPaginatedEmployees(page, size, sortField, sortOrder);
                 return Response.ok(pagedResponse).build();
             } else {
-                List<EmployeeRecordModel> limitedResponse =
+                List<Employee> limitedResponse =
                         employeeService.getFirst50ActiveEmployees();
                 return Response.ok(limitedResponse).build();
             }
@@ -85,7 +86,7 @@ public class EmployeeRecordResource {
             @QueryParam("size") @DefaultValue("50") int size
     ) {
         try {
-            PaginatedResponse<EmployeeRecordModel> response =
+            PaginatedResponse<Employee> response =
                     employeeService.getActiveEmployees(page, size);
             return Response.ok(response).build();
         } catch (IllegalArgumentException e) {
@@ -142,7 +143,7 @@ public class EmployeeRecordResource {
     public Response findByFiscalNumber(@PathParam("nif") String nifStr) {
         try {
             FiscalNumber fiscalNumber = FiscalNumber.of(nifStr);
-            EmployeeRecordModel employee = EmployeeRecordModel.findByFiscalNumber(fiscalNumber.getValue());
+            Employee employee = Employee.findByFiscalNumber(fiscalNumber.getValue());
 
             if (employee == null) {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -173,7 +174,7 @@ public class EmployeeRecordResource {
     public Response findBySocialNumber(@PathParam("niss") String nissStr) {
         try {
             SocialNumber socialNumber = SocialNumber.of(nissStr);
-            EmployeeRecordModel employee = EmployeeRecordModel.findBySocialNumber(socialNumber.getValue());
+            Employee employee = Employee.findBySocialNumber(socialNumber.getValue());
 
             if (employee == null) {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -209,7 +210,7 @@ public class EmployeeRecordResource {
         }
 
         try {
-            List<EmployeeRecordModel> results = employeeService.searchByName(query);
+            List<Employee> results = employeeService.searchByName(query);
             return Response.ok(results).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -233,7 +234,7 @@ public class EmployeeRecordResource {
     public Response findByRole(@PathParam("role") String roleStr) {
         try {
             EmployeeRoleEnum role = EmployeeRoleEnum.valueOf(roleStr.toUpperCase());
-            List<EmployeeRecordModel> employees = employeeService.findByRole(role);
+            List<Employee> employees = employeeService.findByRole(role);
             return Response.ok(employees).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -257,7 +258,7 @@ public class EmployeeRecordResource {
     public Response findByContractType(@PathParam("contract") String contractStr) {
         try {
             TypeOfContractEnum contract = TypeOfContractEnum.valueOf(contractStr.toUpperCase());
-            List<EmployeeRecordModel> employees = employeeService.findByContractType(contract);
+            List<Employee> employees = employeeService.findByContractType(contract);
             return Response.ok(employees).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -281,7 +282,7 @@ public class EmployeeRecordResource {
     public Response getSubordinates(@PathParam("id") String idStr) {
         try {
             UUID managerId = UUID.fromString(idStr);
-            List<EmployeeRecordModel> subordinates = employeeService.getSubordinates(managerId);
+            List<Employee> subordinates = employeeService.getSubordinates(managerId);
             return Response.ok(subordinates).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -300,7 +301,7 @@ public class EmployeeRecordResource {
     @GET
     @Path("/managers")
     public Response getAllManagers() {
-        List<EmployeeRecordModel> managers = employeeService.getAllManagers();
+        List<Employee> managers = employeeService.getAllManagers();
         return Response.ok(managers).build();
     }
 
@@ -314,7 +315,7 @@ public class EmployeeRecordResource {
     @GET
     @Path("/top-level")
     public Response getTopLevelEmployees() {
-        List<EmployeeRecordModel> topLevel = employeeService.getTopLevelEmployees();
+        List<Employee> topLevel = employeeService.getTopLevelEmployees();
         return Response.ok(topLevel).build();
     }
 
@@ -333,7 +334,7 @@ public class EmployeeRecordResource {
     @Transactional
     public Response create(@Valid EmployeeRequestDTO dto) {
         try {
-            EmployeeRecordModel created = employeeService.createEmployee(dto);
+            Employee created = employeeService.createEmployee(dto);
             return Response.status(Response.Status.CREATED)
                     .entity(created)
                     .build();
@@ -360,7 +361,7 @@ public class EmployeeRecordResource {
     public Response update(@PathParam("id") String idStr, @Valid EmployeeRequestDTO dto) {
         try {
             UUID id = UUID.fromString(idStr);
-            EmployeeRecordModel updated = employeeService.updateEmployee(id, dto);
+            Employee updated = employeeService.updateEmployee(id, dto);
             return Response.ok(updated).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -522,7 +523,7 @@ public class EmployeeRecordResource {
     /**
      * Response wrapper for employee with message.
      */
-    public record EmployeeResponse(EmployeeRecordModel employee, String message) {}
+    public record EmployeeResponse(Employee employee, String message) {}
 
     /**
      * Error response wrapper.

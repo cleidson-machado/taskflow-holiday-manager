@@ -1,7 +1,8 @@
 package com.global.lbc.features.human.resources;
 
-import com.global.lbc.features.human.resources.domain.FiscalNumber;
-import com.global.lbc.features.human.resources.domain.SocialNumber;
+import com.global.lbc.features.human.resources.domain.model.FiscalNumber;
+import com.global.lbc.features.human.resources.domain.model.SocialNumber;
+import com.global.lbc.features.human.resources.domain.model.Employee;
 import com.global.lbc.util.PaginatedResponse;
 import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -38,14 +39,14 @@ public class EmployeeService {
      * @param sortOrder Sort order (asc/desc)
      * @return Paginated response with employee list
      */
-    public PaginatedResponse<EmployeeRecordModel> getPaginatedEmployees(int page, int size, String sortField, String sortOrder) {
+    public PaginatedResponse<Employee> getPaginatedEmployees(int page, int size, String sortField, String sortOrder) {
         validatePagination(page, size);
         validateSortField(sortField);
 
         Sort sortBy = buildSort(sortField, sortOrder);
 
-        var query = EmployeeRecordModel.findAll(sortBy).page(page, size);
-        long totalItems = EmployeeRecordModel.count();
+        var query = Employee.findAll(sortBy).page(page, size);
+        long totalItems = Employee.count();
         int totalPages = (int) Math.ceil((double) totalItems / size);
 
         return new PaginatedResponse<>(
@@ -61,8 +62,8 @@ public class EmployeeService {
      *
      * @return List of up to 50 active employees
      */
-    public List<EmployeeRecordModel> getFirst50ActiveEmployees() {
-        return EmployeeRecordModel.find("isActive = true", Sort.by("name").ascending())
+    public List<Employee> getFirst50ActiveEmployees() {
+        return Employee.find("isActive = true", Sort.by("name").ascending())
                 .page(0, DEFAULT_PAGE_SIZE)
                 .list();
     }
@@ -74,12 +75,12 @@ public class EmployeeService {
      * @param size Page size
      * @return Paginated response with active employees
      */
-    public PaginatedResponse<EmployeeRecordModel> getActiveEmployees(int page, int size) {
+    public PaginatedResponse<Employee> getActiveEmployees(int page, int size) {
         validatePagination(page, size);
 
-        var query = EmployeeRecordModel.find("isActive = true", Sort.by("name").ascending())
+        var query = Employee.find("isActive = true", Sort.by("name").ascending())
                 .page(page, size);
-        long totalItems = EmployeeRecordModel.count("isActive = true");
+        long totalItems = Employee.count("isActive = true");
         int totalPages = (int) Math.ceil((double) totalItems / size);
 
         return new PaginatedResponse<>(
@@ -98,11 +99,11 @@ public class EmployeeService {
      * @param id Employee UUID
      * @return Optional containing the employee if found
      */
-    public Optional<EmployeeRecordModel> findById(UUID id) {
+    public Optional<Employee> findById(UUID id) {
         if (id == null) {
             throw new IllegalArgumentException("ID não pode ser nulo");
         }
-        return Optional.ofNullable(EmployeeRecordModel.findById(id));
+        return Optional.ofNullable(Employee.findById(id));
     }
 
     /**
@@ -111,11 +112,11 @@ public class EmployeeService {
      * @param searchTerm Search term
      * @return List of matching employees
      */
-    public List<EmployeeRecordModel> searchByName(String searchTerm) {
+    public List<Employee> searchByName(String searchTerm) {
         if (searchTerm == null || searchTerm.isBlank()) {
             throw new IllegalArgumentException("Termo de busca não pode ser vazio");
         }
-        return EmployeeRecordModel.searchByName(searchTerm);
+        return Employee.searchByName(searchTerm);
     }
 
     /**
@@ -124,11 +125,11 @@ public class EmployeeService {
      * @param role Employee role
      * @return List of employees with the specified role
      */
-    public List<EmployeeRecordModel> findByRole(EmployeeRoleEnum role) {
+    public List<Employee> findByRole(EmployeeRoleEnum role) {
         if (role == null) {
             throw new IllegalArgumentException("Role não pode ser nulo");
         }
-        return EmployeeRecordModel.findByRole(role);
+        return Employee.findByRole(role);
     }
 
     /**
@@ -137,11 +138,11 @@ public class EmployeeService {
      * @param contractType Contract type
      * @return List of employees with the specified contract type
      */
-    public List<EmployeeRecordModel> findByContractType(TypeOfContractEnum contractType) {
+    public List<Employee> findByContractType(TypeOfContractEnum contractType) {
         if (contractType == null) {
             throw new IllegalArgumentException("Tipo de contrato não pode ser nulo");
         }
-        return EmployeeRecordModel.list("contractRole = ?1 AND isActive = true", contractType);
+        return Employee.list("contractRole = ?1 AND isActive = true", contractType);
     }
 
     // ========== VALIDAÇÕES DE UNICIDADE ==========
@@ -156,7 +157,7 @@ public class EmployeeService {
         if (fiscalNumber == null) {
             return false;
         }
-        return EmployeeRecordModel.count("fiscalNumber = ?1", fiscalNumber) > 0;
+        return Employee.count("fiscalNumber = ?1", fiscalNumber) > 0;
     }
 
     /**
@@ -170,7 +171,7 @@ public class EmployeeService {
         if (fiscalNumber == null) {
             return false;
         }
-        return EmployeeRecordModel.count("fiscalNumber = ?1 and id != ?2", fiscalNumber, excludeId) > 0;
+        return Employee.count("fiscalNumber = ?1 and id != ?2", fiscalNumber, excludeId) > 0;
     }
 
     /**
@@ -183,7 +184,7 @@ public class EmployeeService {
         if (socialNumber == null) {
             return false;
         }
-        return EmployeeRecordModel.count("socialNumber = ?1", socialNumber) > 0;
+        return Employee.count("socialNumber = ?1", socialNumber) > 0;
     }
 
     /**
@@ -197,7 +198,7 @@ public class EmployeeService {
         if (socialNumber == null) {
             return false;
         }
-        return EmployeeRecordModel.count("socialNumber = ?1 and id != ?2", socialNumber, excludeId) > 0;
+        return Employee.count("socialNumber = ?1 and id != ?2", socialNumber, excludeId) > 0;
     }
 
     /**
@@ -239,9 +240,9 @@ public class EmployeeService {
      * @return Created employee
      */
     @Transactional
-    public EmployeeRecordModel createEmployee(EmployeeRequestDTO dto) {
+    public Employee createEmployee(EmployeeRequestDTO dto) {
         // Converter DTO para Entity
-        EmployeeRecordModel employee = convertDtoToEntity(dto);
+        Employee employee = convertDtoToEntity(dto);
 
         validateEmployeeData(employee);
         validateUniqueIdentifiers(employee.fiscalNumber, employee.socialNumber, null);
@@ -262,8 +263,8 @@ public class EmployeeService {
      * @return Updated employee
      */
     @Transactional
-    public EmployeeRecordModel updateEmployee(UUID id, EmployeeRequestDTO dto) {
-        EmployeeRecordModel existing = EmployeeRecordModel.findById(id);
+    public Employee updateEmployee(UUID id, EmployeeRequestDTO dto) {
+        Employee existing = Employee.findById(id);
         if (existing == null) {
             throw new IllegalArgumentException("Empregado não encontrado: " + id);
         }
@@ -294,7 +295,7 @@ public class EmployeeService {
      */
     @Transactional
     public void deactivateEmployee(UUID id, String deletedBy) {
-        EmployeeRecordModel employee = EmployeeRecordModel.findById(id);
+        Employee employee = Employee.findById(id);
 
         if (employee == null) {
             throw new NotFoundException("Empregado não encontrado: " + id);
@@ -306,7 +307,7 @@ public class EmployeeService {
 
         // Verifica se é gerente com subordinados ativos
         if (employee.isManager()) {
-            long activeSubordinates = EmployeeRecordModel.countActiveSubordinates(id);
+            long activeSubordinates = Employee.countActiveSubordinates(id);
             if (activeSubordinates > 0) {
                 throw new BadRequestException(
                         "Não é possível deletar gerente com subordinados ativos. " +
@@ -369,7 +370,7 @@ public class EmployeeService {
      */
     @Transactional
     public void restoreEmployee(UUID id) {
-        EmployeeRecordModel employee = EmployeeRecordModel.findByIdIncludingDeleted(id);
+        Employee employee = Employee.findByIdIncludingDeleted(id);
 
         if (employee == null) {
             throw new NotFoundException("Empregado não encontrado: " + id);
@@ -395,7 +396,7 @@ public class EmployeeService {
      */
     @Transactional
     public void purgeEmployee(UUID id) {
-        EmployeeRecordModel employee = EmployeeRecordModel.findByIdIncludingDeleted(id);
+        Employee employee = Employee.findByIdIncludingDeleted(id);
 
         if (employee == null) {
             throw new NotFoundException("Empregado não encontrado: " + id);
@@ -423,7 +424,7 @@ public class EmployeeService {
         }
 
         // Validação: não pode ter subordinados (mesmo inativos)
-        long totalSubordinates = EmployeeRecordModel.count("manager.id = ?1", id);
+        long totalSubordinates = Employee.count("manager.id = ?1", id);
         if (totalSubordinates > 0) {
             throw new BadRequestException(
                     "Não é possível purgar empregado com subordinados no histórico. " +
@@ -440,8 +441,8 @@ public class EmployeeService {
      *
      * @return Lista de empregados deletados
      */
-    public List<EmployeeRecordModel> getDeletedEmployees() {
-        return EmployeeRecordModel.findAllDeleted();
+    public List<Employee> getDeletedEmployees() {
+        return Employee.findAllDeleted();
     }
 
     /**
@@ -451,12 +452,12 @@ public class EmployeeService {
      * @param size Page size
      * @return Paginated response with deleted employees
      */
-    public PaginatedResponse<EmployeeRecordModel> getDeletedEmployees(int page, int size) {
+    public PaginatedResponse<Employee> getDeletedEmployees(int page, int size) {
         validatePagination(page, size);
 
-        var query = EmployeeRecordModel.find("isActive = false", Sort.by("deletedAt").descending())
+        var query = Employee.find("isActive = false", Sort.by("deletedAt").descending())
                 .page(page, size);
-        long totalItems = EmployeeRecordModel.count("isActive = false");
+        long totalItems = Employee.count("isActive = false");
         int totalPages = (int) Math.ceil((double) totalItems / size);
 
         return new PaginatedResponse<>(
@@ -474,7 +475,7 @@ public class EmployeeService {
      * @param endDate   Data final
      * @return Lista de empregados deletados no período
      */
-    public List<EmployeeRecordModel> getDeletedEmployeesBetween(LocalDateTime startDate, LocalDateTime endDate) {
+    public List<Employee> getDeletedEmployeesBetween(LocalDateTime startDate, LocalDateTime endDate) {
         if (startDate == null || endDate == null) {
             throw new IllegalArgumentException("Datas não podem ser nulas");
         }
@@ -483,7 +484,7 @@ public class EmployeeService {
             throw new IllegalArgumentException("Data inicial não pode ser posterior à data final");
         }
 
-        return EmployeeRecordModel.findDeletedBetween(startDate, endDate);
+        return Employee.findDeletedBetween(startDate, endDate);
     }
 
     /**
@@ -492,12 +493,12 @@ public class EmployeeService {
      * @param deletedBy Username do usuário
      * @return Lista de empregados deletados pelo usuário
      */
-    public List<EmployeeRecordModel> getDeletedEmployeesByUser(String deletedBy) {
+    public List<Employee> getDeletedEmployeesByUser(String deletedBy) {
         if (deletedBy == null || deletedBy.isBlank()) {
             throw new IllegalArgumentException("Username não pode ser vazio");
         }
 
-        return EmployeeRecordModel.findDeletedBy(deletedBy);
+        return Employee.findDeletedBy(deletedBy);
     }
 
     // ========== GESTÃO DE HIERARQUIA ==========
@@ -512,8 +513,8 @@ public class EmployeeService {
     public void assignManager(UUID employeeId, UUID managerId) {
         validateManagerAssignment(employeeId, managerId);
 
-        EmployeeRecordModel employee = EmployeeRecordModel.findById(employeeId);
-        EmployeeRecordModel manager = EmployeeRecordModel.findById(managerId);
+        Employee employee = Employee.findById(employeeId);
+        Employee manager = Employee.findById(managerId);
 
         if (employee == null || manager == null) {
             throw new IllegalArgumentException("Empregado ou gerente não encontrado");
@@ -529,7 +530,7 @@ public class EmployeeService {
      */
     @Transactional
     public void removeManager(UUID employeeId) {
-        EmployeeRecordModel employee = EmployeeRecordModel.findById(employeeId);
+        Employee employee = Employee.findById(employeeId);
         if (employee == null) {
             throw new IllegalArgumentException("Empregado não encontrado: " + employeeId);
         }
@@ -543,11 +544,11 @@ public class EmployeeService {
      * @param managerId Manager ID
      * @return List of subordinates
      */
-    public List<EmployeeRecordModel> getSubordinates(UUID managerId) {
+    public List<Employee> getSubordinates(UUID managerId) {
         if (managerId == null) {
             throw new IllegalArgumentException("ID do gerente não pode ser nulo");
         }
-        return EmployeeRecordModel.findSubordinatesByManager(managerId);
+        return Employee.findSubordinatesByManager(managerId);
     }
 
     /**
@@ -555,8 +556,8 @@ public class EmployeeService {
      *
      * @return List of managers
      */
-    public List<EmployeeRecordModel> getAllManagers() {
-        return EmployeeRecordModel.findAllManagers();
+    public List<Employee> getAllManagers() {
+        return Employee.findAllManagers();
     }
 
     /**
@@ -564,8 +565,8 @@ public class EmployeeService {
      *
      * @return List of top-level employees
      */
-    public List<EmployeeRecordModel> getTopLevelEmployees() {
-        return EmployeeRecordModel.findTopLevelEmployees();
+    public List<Employee> getTopLevelEmployees() {
+        return Employee.findTopLevelEmployees();
     }
 
     // ========== CONVERSÃO DTO <-> ENTITY ==========
@@ -576,8 +577,8 @@ public class EmployeeService {
      * @param dto Employee request DTO
      * @return Employee entity
      */
-    private EmployeeRecordModel convertDtoToEntity(EmployeeRequestDTO dto) {
-        EmployeeRecordModel employee = new EmployeeRecordModel();
+    private Employee convertDtoToEntity(EmployeeRequestDTO dto) {
+        Employee employee = new Employee();
 
         employee.name = dto.getName();
         employee.surname = dto.getSurname();
@@ -604,7 +605,7 @@ public class EmployeeService {
         // Atribuir manager se fornecido
         if (dto.getManagerId() != null && !dto.getManagerId().isBlank()) {
             UUID managerId = UUID.fromString(dto.getManagerId());
-            employee.manager = EmployeeRecordModel.findById(managerId);
+            employee.manager = Employee.findById(managerId);
 
             if (employee.manager == null) {
                 throw new IllegalArgumentException("Gerente não encontrado com ID: " + dto.getManagerId());
@@ -620,7 +621,7 @@ public class EmployeeService {
      * @param existing Existing employee entity
      * @param dto      Employee request DTO
      */
-    private void updateEntityFromDto(EmployeeRecordModel existing, EmployeeRequestDTO dto) {
+    private void updateEntityFromDto(Employee existing, EmployeeRequestDTO dto) {
         existing.name = dto.getName();
         existing.surname = dto.getSurname();
         existing.fiscalNumber = FiscalNumber.of(dto.getFiscalNumber());
@@ -646,7 +647,7 @@ public class EmployeeService {
         // Atualizar manager
         if (dto.getManagerId() != null && !dto.getManagerId().isBlank()) {
             UUID managerId = UUID.fromString(dto.getManagerId());
-            existing.manager = EmployeeRecordModel.findById(managerId);
+            existing.manager = Employee.findById(managerId);
 
             if (existing.manager == null) {
                 throw new IllegalArgumentException("Gerente não encontrado com ID: " + dto.getManagerId());
@@ -658,7 +659,7 @@ public class EmployeeService {
 
     // ========== VALIDAÇÕES PRIVADAS ==========
 
-    private void validateEmployeeData(EmployeeRecordModel employee) {
+    private void validateEmployeeData(Employee employee) {
         if (employee == null) {
             throw new IllegalArgumentException("Dados do empregado não podem ser nulos");
         }
@@ -705,7 +706,7 @@ public class EmployeeService {
             return; // Removing manager is valid
         }
 
-        if (employeeId != null && !EmployeeRecordModel.canAssignManager(employeeId, managerId)) {
+        if (employeeId != null && !Employee.canAssignManager(employeeId, managerId)) {
             throw new IllegalArgumentException("Atribuição de gerente inválida: referência circular ou auto-atribuição detectada");
         }
     }
@@ -759,7 +760,7 @@ public class EmployeeService {
      * @return Count of active employees
      */
     public long countActiveEmployees() {
-        return EmployeeRecordModel.count("isActive = true");
+        return Employee.count("isActive = true");
     }
 
     /**
@@ -768,7 +769,7 @@ public class EmployeeService {
      * @return Count of deleted employees
      */
     public long countDeletedEmployees() {
-        return EmployeeRecordModel.count("isActive = false");
+        return Employee.count("isActive = false");
     }
 
     /**
@@ -778,7 +779,7 @@ public class EmployeeService {
      * @return Count of employees with specified role
      */
     public long countByRole(EmployeeRoleEnum role) {
-        return EmployeeRecordModel.count("employeeRole = ?1 AND isActive = true", role);
+        return Employee.count("employeeRole = ?1 AND isActive = true", role);
     }
 
     /**
@@ -788,7 +789,7 @@ public class EmployeeService {
      * @return Count of employees with specified contract type
      */
     public long countByContractType(TypeOfContractEnum contractType) {
-        return EmployeeRecordModel.count("contractRole = ?1 AND isActive = true", contractType);
+        return Employee.count("contractRole = ?1 AND isActive = true", contractType);
     }
 
     /**
@@ -798,7 +799,7 @@ public class EmployeeService {
      * @param endDate   End date
      * @return List of employees hired in the range
      */
-    public List<EmployeeRecordModel> findByHireDateRange(LocalDate startDate, LocalDate endDate) {
+    public List<Employee> findByHireDateRange(LocalDate startDate, LocalDate endDate) {
         if (startDate == null || endDate == null) {
             throw new IllegalArgumentException("Datas não podem ser nulas");
         }
@@ -807,6 +808,6 @@ public class EmployeeService {
             throw new IllegalArgumentException("Data inicial não pode ser posterior à data final");
         }
 
-        return EmployeeRecordModel.list("hireDate >= ?1 AND hireDate <= ?2 AND isActive = true", startDate, endDate);
+        return Employee.list("hireDate >= ?1 AND hireDate <= ?2 AND isActive = true", startDate, endDate);
     }
 }

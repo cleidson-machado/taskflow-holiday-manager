@@ -1,5 +1,6 @@
 package com.global.lbc.features.human.resources.domain;
 
+import com.global.lbc.features.human.resources.domain.model.SocialNumber;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

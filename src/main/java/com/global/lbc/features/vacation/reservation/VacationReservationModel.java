@@ -1,6 +1,6 @@
 package com.global.lbc.features.vacation.reservation;
 
-import com.global.lbc.features.human.resources.EmployeeRecordModel;
+import com.global.lbc.features.human.resources.domain.model.Employee;
 import com.global.lbc.features.vacation.order.VacationStatusEnum;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
@@ -33,7 +33,7 @@ public class VacationReservationModel extends PanacheEntityBase {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false, foreignKey = @ForeignKey(name = "fk_reservation_employee"))
-    public EmployeeRecordModel employee;
+    public Employee employee;
 
     // ========== PERÍODO DA RESERVA ==========
     @Column(name = "start_date", nullable = false)
