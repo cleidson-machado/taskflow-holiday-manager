@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: quarkus_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: quarkus
+      POSTGRES_PASSWORD: quarkus123
+      POSTGRES_DB: quarkus_db
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - proxy-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: quarkus_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@local.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+      # Porta para acessar a interface de administração (AGORA SÓ LOCALMENTE)
+    depends_on:
+      - postgres
+    networks:
+      - proxy-network
+
+volumes:
+  pg_data:
+
+networks:
+  proxy-network:
+    driver: bridge
+    name: proxy-network

@@ -1,7 +1,7 @@
 # 🏖️ TaskFlow Holiday Manager API
 
 > **Technical Assessment Project** - Full-Stack Vacation Management System  
-> A RESTful API built with Quarkus for managing employees and vacation requests with role-based access control.
+> A RESTful API built with Quarkus for managing employeeRecordModels and vacation requests with role-based access control.
 
 [![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://openjdk.org/)
 [![Quarkus](https://img.shields.io/badge/Quarkus-3.29.0-blue.svg)](https://quarkus.io/)
@@ -29,10 +29,10 @@
 
 ## 🎯 About the Project
 
-**TaskFlow Holiday Manager** is an internal system designed for **TaskFlow Ltda.** to manage employees and vacation requests efficiently. The system implements role-based access control (RBAC) with three distinct user roles:
+**TaskFlow Holiday Manager** is an internal system designed for **TaskFlow Ltda.** to manage employeeRecordModels and vacation requests efficiently. The system implements role-based access control (RBAC) with three distinct user roles:
 
 - **👨‍💼 Admin**: Full system access - create users and manage all vacation requests
-- **👔 Manager**: Manage assigned employees - approve/reject vacation requests for their team
+- **👔 Manager**: Manage assigned employeeRecordModels - approve/reject vacation requests for their team
 - **👤 Collaborator**: Self-service - create and manage personal vacation requests
 
 ### Assessment Requirements
@@ -41,7 +41,7 @@ This project fulfills the following technical requirements:
 
 ✅ **Employee Management**: CRUD operations with manager association  
 ✅ **Vacation Request Management**: Create, list, edit, and cancel requests  
-✅ **Overlap Validation**: Prevent concurrent vacation periods between employees  
+✅ **Overlap Validation**: Prevent concurrent vacation periods between employeeRecordModels  
 ✅ **Status Workflow**: Pending → Approved/Rejected transitions  
 ✅ **Role-Based Authorization**: Granular access control per user role  
 ✅ **API Documentation**: OpenAPI/Swagger specification  
