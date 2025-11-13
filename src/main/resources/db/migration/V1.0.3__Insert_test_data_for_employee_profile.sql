@@ -1,22 +1,22 @@
--- ADMIN 1 (CEO - No manager) - NIF: 284447188 | NISS: 72385546187
+-- ADMIN 1 (CEO - No manager) - NIF: 284447188 | NISS: 23903058881
 INSERT INTO employee_profile (id, name, surname, fiscal_number, fiscal_number_country, social_number, date_of_birth, contract_role, employee_role, hire_date, is_active, salary_base, manager_id, vacation_days_balance, vacation_days_used, created_at, updated_at) VALUES
-(gen_random_uuid(), 'Fernando', 'Sousa', '284447188', 'PT', '72385546187', '1975-03-15', 'FULL_TIME', 'ADMIN', '2020-01-10', true, 5500.00, NULL, 22, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+(gen_random_uuid(), 'Fernando', 'Sousa', '284447188', 'PT', '23903058881', '1975-03-15', 'FULL_TIME', 'ADMIN', '2020-01-10', true, 5500.00, NULL, 22, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
--- ADMIN 2 (CTO - No manager) - NIF: 211829900 | NISS: 82125158747
+-- ADMIN 2 (CTO - No manager) - NIF: 211829900 | NISS: 14513842132
 INSERT INTO employee_profile (id, name, surname, fiscal_number, fiscal_number_country, social_number, date_of_birth, contract_role, employee_role, hire_date, is_active, salary_base, manager_id, vacation_days_balance, vacation_days_used, created_at, updated_at) VALUES
-(gen_random_uuid(), 'Patrícia', 'Lopes', '211829900', 'PT', '82125158747', '1978-07-22', 'FULL_TIME', 'ADMIN', '2020-02-01', true, 5200.00, NULL, 22, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+(gen_random_uuid(), 'Patrícia', 'Lopes', '211829900', 'PT', '14513842132', '1978-07-22', 'FULL_TIME', 'ADMIN', '2020-02-01', true, 5200.00, NULL, 22, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
--- MANAGER 1 (Operations Manager) - NIF: 210255480 | NISS: 83379904976
+-- MANAGER 1 (Operations Manager) - NIF: 210255480 | NISS: 16576622884
 INSERT INTO employee_profile (id, name, surname, fiscal_number, fiscal_number_country, social_number, date_of_birth, contract_role, employee_role, hire_date, is_active, salary_base, manager_id, vacation_days_balance, vacation_days_used, created_at, updated_at) VALUES
-(gen_random_uuid(), 'Rui', 'Mendes', '210255480', 'PT', '83379904976', '1985-11-08', 'FULL_TIME', 'MANAGER', '2021-03-15', true, 3800.00, NULL, 22, 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+(gen_random_uuid(), 'Rui', 'Mendes', '210255480', 'PT', '16576622884', '1985-11-08', 'FULL_TIME', 'MANAGER', '2021-03-15', true, 3800.00, NULL, 22, 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
--- MANAGER 2 (IT Manager) - NIF: 264241070 | NISS: 37594529840
+-- MANAGER 2 (IT Manager) - NIF: 264241070 | NISS: 11028084196
 INSERT INTO employee_profile (id, name, surname, fiscal_number, fiscal_number_country, social_number, date_of_birth, contract_role, employee_role, hire_date, is_active, salary_base, manager_id, vacation_days_balance, vacation_days_used, created_at, updated_at) VALUES
-(gen_random_uuid(), 'Catarina', 'Ribeiro', '264241070', 'PT', '37594529840', '1988-05-19', 'FULL_TIME', 'MANAGER', '2021-06-01', true, 4000.00, NULL, 22, 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+(gen_random_uuid(), 'Catarina', 'Ribeiro', '264241070', 'PT', '11028084196', '1988-05-19', 'FULL_TIME', 'MANAGER', '2021-06-01', true, 4000.00, NULL, 22, 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
--- EMPLOYEE 1 (Developer) - NIF: 256093237 | NISS: 87907953250
+-- EMPLOYEE 1 (Developer) - NIF: 256093237 | NISS: 11299079043
 INSERT INTO employee_profile (id, name, surname, fiscal_number, fiscal_number_country, social_number, date_of_birth, contract_role, employee_role, hire_date, is_active, salary_base, manager_id, vacation_days_balance, vacation_days_used, created_at, updated_at) VALUES
-(gen_random_uuid(), 'Tiago', 'Nunes', '256093237', 'PT', '87907953250', '1992-09-12', 'FULL_TIME', 'EMPLOYEE', '2022-01-10', true, 2500.00, NULL, 22, 8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+(gen_random_uuid(), 'Tiago', 'Nunes', '256093237', 'PT', '11299079043', '1992-09-12', 'FULL_TIME', 'EMPLOYEE', '2022-01-10', true, 2500.00, NULL, 22, 8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- EMPLOYEE 2 (Analyst) - NIF: 251336484 | NISS: 12668499156
 INSERT INTO employee_profile (id, name, surname, fiscal_number, fiscal_number_country, social_number, date_of_birth, contract_role, employee_role, hire_date, is_active, salary_base, manager_id, vacation_days_balance, vacation_days_used, created_at, updated_at) VALUES

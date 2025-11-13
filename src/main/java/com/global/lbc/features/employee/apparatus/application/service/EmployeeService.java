@@ -1,15 +1,17 @@
 package com.global.lbc.features.employee.apparatus.application.service;
 
+import com.global.lbc.features.employee.apparatus.application.EmployeeMapper;
 import com.global.lbc.features.employee.apparatus.application.dto.EmployeeResponse;
 import com.global.lbc.features.employee.apparatus.model.Employee;
-import com.global.lbc.features.employee.apparatus.model.util.EmployeeRole;
-import com.global.lbc.features.employee.apparatus.model.util.EmploymentType;
 import com.global.lbc.features.employee.apparatus.usecases.any.fiscal.number.factory.TaxIdentifierFactory;
 import com.global.lbc.features.employee.apparatus.usecases.any.fiscal.number.interfaces.TaxIdentifier;
+import com.global.lbc.features.employee.apparatus.model.util.EmployeeRole;
+import com.global.lbc.features.employee.apparatus.model.util.EmploymentType;
 import com.global.lbc.features.employee.apparatus.usecases.pt.social.number.SocialNumber;
 import com.global.lbc.shared.PaginatedResponse;
 import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
@@ -28,6 +30,9 @@ public class EmployeeService {
     private static final int MAX_PAGE_SIZE = 100;
     private static final int PURGE_DAYS_THRESHOLD = 30;
 
+    @Inject
+    EmployeeMapper mapper;
+
     public PaginatedResponse<EmployeeResponse> getPaginatedEmployees(int page, int size, String sortField, String sortOrder) {
         validatePagination(page, size);
         validateSortField(sortField);
@@ -39,7 +44,7 @@ public class EmployeeService {
         int totalPages = (int) Math.ceil((double) totalItems / size);
 
         List<EmployeeResponse> employees = query.list().stream()
-                .map(this::toDto)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
 
         return new PaginatedResponse<>(
@@ -55,7 +60,7 @@ public class EmployeeService {
                 .page(0, DEFAULT_PAGE_SIZE)
                 .list()
                 .stream()
-                .map(this::toDto)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -68,7 +73,7 @@ public class EmployeeService {
         int totalPages = (int) Math.ceil((double) totalItems / size);
 
         List<EmployeeResponse> employees = query.list().stream()
-                .map(this::toDto)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
 
         return new PaginatedResponse<>(
@@ -84,7 +89,7 @@ public class EmployeeService {
             throw new IllegalArgumentException("ID cannot be null");
         }
         Employee employee = Employee.findById(id);
-        return Optional.ofNullable(employee).map(this::toDto);
+        return Optional.ofNullable(employee).map(mapper::toResponse);
     }
 
     public EmployeeResponse findByFiscalNumber(String fiscalNumber, String country) {
@@ -104,7 +109,7 @@ public class EmployeeService {
             throw new NotFoundException("Employee not found with fiscal number: " + fiscalNumber);
         }
 
-        return toDto(employee);
+        return mapper.toResponse(employee);
     }
 
     public EmployeeResponse findBySocialNumber(String socialNumberStr) {
@@ -122,7 +127,7 @@ public class EmployeeService {
             throw new NotFoundException("Employee not found with social number: " + socialNumberStr);
         }
 
-        return toDto(employee);
+        return mapper.toResponse(employee);
     }
 
     public List<EmployeeResponse> searchByName(String searchTerm) {
@@ -137,7 +142,7 @@ public class EmployeeService {
                 )
                 .list()
                 .stream()
-                .map(this::toDto)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -149,7 +154,7 @@ public class EmployeeService {
         return Employee.<Employee>find("employeeRole = ?1 AND isActive = true", role)
                 .list()
                 .stream()
-                .map(this::toDto)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -161,7 +166,7 @@ public class EmployeeService {
         return Employee.<Employee>find("employmentType = ?1 AND isActive = true", type)
                 .list()
                 .stream()
-                .map(this::toDto)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -226,7 +231,7 @@ public class EmployeeService {
         String socialNumberStr = (dto.socialNumber != null) ? dto.socialNumber.getValue() : null;
         validateUniqueIdentifiers(dto.fiscalNumber, dto.fiscalNumberCountry, socialNumberStr, null);
 
-        Employee employee = toEntity(dto);
+        Employee employee = mapper.toEntity(dto);
 
         if (employee.manager != null) {
             validateManagerAssignment(null, employee.manager.id);
@@ -234,7 +239,7 @@ public class EmployeeService {
 
         employee.persist();
 
-        return toDto(employee);
+        return mapper.toResponse(employee);
     }
 
     @Transactional
@@ -249,13 +254,13 @@ public class EmployeeService {
         String socialNumberStr = (dto.socialNumber != null) ? dto.socialNumber.getValue() : null;
         validateUniqueIdentifiers(dto.fiscalNumber, dto.fiscalNumberCountry, socialNumberStr, id);
 
-        updateEntity(employee, dto);
+        mapper.updateEntity(employee, dto);
 
         if (employee.manager != null) {
             validateManagerAssignment(id, employee.manager.id);
         }
 
-        return toDto(employee);
+        return mapper.toResponse(employee);
     }
 
     @Transactional
@@ -360,7 +365,7 @@ public class EmployeeService {
         return Employee.<Employee>find("isActive = false AND deletedAt IS NOT NULL")
                 .list()
                 .stream()
-                .map(this::toDto)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -373,7 +378,7 @@ public class EmployeeService {
         int totalPages = (int) Math.ceil((double) totalItems / size);
 
         List<EmployeeResponse> employees = query.list().stream()
-                .map(this::toDto)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
 
         return new PaginatedResponse<>(
@@ -399,7 +404,7 @@ public class EmployeeService {
                 )
                 .list()
                 .stream()
-                .map(this::toDto)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -411,7 +416,7 @@ public class EmployeeService {
         return Employee.<Employee>find("isActive = false AND deletedBy = ?1", deletedBy)
                 .list()
                 .stream()
-                .map(this::toDto)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -446,7 +451,7 @@ public class EmployeeService {
         return Employee.<Employee>find("manager.id = ?1 AND isActive = true", managerId)
                 .list()
                 .stream()
-                .map(this::toDto)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -462,7 +467,7 @@ public class EmployeeService {
         return Employee.<Employee>find("id IN ?1 AND isActive = true", managerIds)
                 .list()
                 .stream()
-                .map(this::toDto)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -470,7 +475,7 @@ public class EmployeeService {
         return Employee.<Employee>find("manager IS NULL AND isActive = true")
                 .list()
                 .stream()
-                .map(this::toDto)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -481,7 +486,7 @@ public class EmployeeService {
                 .page(page, size)
                 .list()
                 .stream()
-                .map(this::toDto)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -492,97 +497,8 @@ public class EmployeeService {
                 .page(page, size)
                 .list()
                 .stream()
-                .map(this::toDto)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
-    }
-
-    private Employee toEntity(EmployeeResponse dto) {
-        Employee employee = new Employee();
-
-        employee.name = dto.name;
-        employee.surname = dto.surname;
-        employee.dateOfBirth = dto.dateOfBirth;
-        employee.employmentType = dto.employmentType;
-        employee.employeeRole = dto.employeeRole;
-        employee.hireDate = dto.hireDate;
-        employee.terminationDate = dto.terminationDate;
-        employee.salaryBase = dto.salaryBase;
-        employee.isActive = dto.isActive != null ? dto.isActive : true;
-        employee.vacationDaysBalance = dto.vacationDaysBalance != null ? dto.vacationDaysBalance : 0L;
-        employee.vacationDaysUsed = dto.vacationDaysUsed != null ? dto.vacationDaysUsed : 0L;
-
-        if (dto.fiscalNumber != null && dto.fiscalNumberCountry != null) {
-            TaxIdentifier taxId = TaxIdentifierFactory.create(dto.fiscalNumberCountry, dto.fiscalNumber);
-            employee.setTaxIdentifier(taxId);
-        }
-
-        if (dto.socialNumber != null) {
-            employee.socialNumber = dto.socialNumber;
-        }
-
-        if (dto.managerId != null) {
-            Employee manager = Employee.findById(dto.managerId);
-            if (manager != null) {
-                employee.manager = manager;
-            }
-        }
-
-        return employee;
-    }
-
-    private EmployeeResponse toDto(Employee employee) {
-        EmployeeResponse dto = new EmployeeResponse();
-
-        dto.id = employee.id;
-        dto.name = employee.name;
-        dto.surname = employee.surname;
-        dto.fiscalNumber = employee.fiscalNumber;
-        dto.fiscalNumberCountry = employee.fiscalNumberCountry;
-        dto.socialNumber = employee.socialNumber;
-        dto.dateOfBirth = employee.dateOfBirth;
-        dto.employmentType = employee.employmentType;
-        dto.employeeRole = employee.employeeRole;
-        dto.hireDate = employee.hireDate;
-        dto.terminationDate = employee.terminationDate;
-        dto.salaryBase = employee.salaryBase;
-        dto.isActive = employee.isActive;
-        dto.managerId = employee.manager != null ? employee.manager.id : null;
-        dto.vacationDaysBalance = employee.vacationDaysBalance;
-        dto.vacationDaysUsed = employee.vacationDaysUsed;
-        dto.createdAt = employee.getCreatedAt();
-        dto.updatedAt = employee.getUpdatedAt();
-
-        return dto;
-    }
-
-    private void updateEntity(Employee employee, EmployeeResponse dto) {
-        employee.name = dto.name;
-        employee.surname = dto.surname;
-        employee.dateOfBirth = dto.dateOfBirth;
-        employee.employmentType = dto.employmentType;
-        employee.employeeRole = dto.employeeRole;
-        employee.hireDate = dto.hireDate;
-        employee.terminationDate = dto.terminationDate;
-        employee.salaryBase = dto.salaryBase;
-        employee.isActive = dto.isActive;
-        employee.vacationDaysBalance = dto.vacationDaysBalance;
-        employee.vacationDaysUsed = dto.vacationDaysUsed;
-
-        if (dto.fiscalNumber != null && dto.fiscalNumberCountry != null) {
-            TaxIdentifier taxId = TaxIdentifierFactory.create(dto.fiscalNumberCountry, dto.fiscalNumber);
-            employee.setTaxIdentifier(taxId);
-        }
-
-        if (dto.socialNumber != null) {
-            employee.socialNumber = dto.socialNumber;
-        }
-
-        if (dto.managerId != null) {
-            Employee manager = Employee.findById(dto.managerId);
-            employee.manager = manager;
-        } else {
-            employee.manager = null;
-        }
     }
 
     private void validateEmployeeData(EmployeeResponse dto) {
@@ -726,7 +642,7 @@ public class EmployeeService {
                 )
                 .list()
                 .stream()
-                .map(this::toDto)
+                .map(mapper::toResponse)
                 .collect(Collectors.toList());
     }
 }
