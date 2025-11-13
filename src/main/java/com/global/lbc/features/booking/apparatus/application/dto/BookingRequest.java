@@ -7,10 +7,9 @@ import java.util.UUID;
 public class BookingRequest {
     public UUID employeeId;
     public LocalDate startDate;
-    public LocalDate endDate;
+    public Integer daysReserved; // Número de dias úteis de férias solicitados
     public String requestNotes;
-    // status, daysReserved, vacationId etc. não devem vir no request inicial
+    // status, vacationId etc. não devem vir no request inicial
 
     public BookingRequest() {}
 }
-

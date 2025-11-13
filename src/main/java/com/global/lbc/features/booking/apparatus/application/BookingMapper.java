@@ -78,9 +78,9 @@ public class BookingMapper {
         }
 
         entity.startDate = dto.startDate;
-        entity.endDate = dto.endDate;
+        entity.daysReserved = dto.daysReserved;
         entity.requestNotes = dto.requestNotes;
-        // Campos de status/dias são definidos pelo Service/Entidade
+        // endDate será calculado pelo Service usando VacationDaysBtCalculator
 
         return entity;
     }
@@ -101,14 +101,14 @@ public class BookingMapper {
             entity.employee = newEmployee;
         }
 
-        // Atualiza datas
+        // Atualiza data de início e dias reservados
         entity.startDate = dto.startDate;
-        entity.endDate = dto.endDate;
+        entity.daysReserved = dto.daysReserved;
 
         // Atualiza notas
         entity.requestNotes = dto.requestNotes;
 
-        // Nota: O Service é responsável pelo recálculo de daysReserved se as datas mudarem.
+        // Nota: O Service é responsável pelo recálculo de endDate usando VacationDaysBtCalculator.
     }
 }
 

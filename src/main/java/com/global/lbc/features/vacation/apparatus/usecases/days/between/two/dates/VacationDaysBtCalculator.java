@@ -49,4 +49,52 @@ public class VacationDaysBtCalculator implements BusinessDayCalculator {
         Set<LocalDate> holidays = holidayProvider.getBusinessDayHolidaysForPeriod(date.getYear(), date.getYear());
         return holidays.contains(date);
     }
+
+    /**
+     * Calcula a data final de férias baseada na data de início e no número de dias úteis solicitados.
+     * Considera finais de semana e feriados no cálculo.
+     *
+     * @param startDate Data de início das férias
+     * @param daysRequested Número de dias úteis de férias solicitados
+     * @return Data final das férias (última data efetiva de férias)
+     */
+    public LocalDate calculateEndDate(LocalDate startDate, int daysRequested) {
+        if (startDate == null) {
+            throw new IllegalArgumentException("Start date cannot be null");
+        }
+        if (daysRequested <= 0) {
+            throw new IllegalArgumentException("Days requested must be greater than zero");
+        }
+
+        LocalDate currentDate = startDate;
+        int businessDaysCount = 0;
+
+        // Busca feriados para o período estimado (adiciona margem de segurança)
+        int startYear = startDate.getYear();
+        int estimatedEndYear = startDate.plusDays(daysRequested * 2L).getYear(); // margem para feriados e fins de semana
+        Set<LocalDate> holidays = holidayProvider.getBusinessDayHolidaysForPeriod(startYear, estimatedEndYear);
+
+        // Itera até encontrar o número de dias úteis solicitados
+        while (businessDaysCount < daysRequested) {
+            DayOfWeek dayOfWeek = currentDate.getDayOfWeek();
+
+            // Verifica se é dia útil (não é fim de semana e não é feriado)
+            boolean isWeekend = (dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY);
+            boolean isHoliday = holidays.contains(currentDate);
+
+            if (!isWeekend && !isHoliday) {
+                businessDaysCount++;
+
+                // Se já atingiu o número de dias solicitados, retorna a data atual
+                if (businessDaysCount == daysRequested) {
+                    return currentDate;
+                }
+            }
+
+            // Avança para o próximo dia
+            currentDate = currentDate.plusDays(1);
+        }
+
+        return currentDate;
+    }
 }

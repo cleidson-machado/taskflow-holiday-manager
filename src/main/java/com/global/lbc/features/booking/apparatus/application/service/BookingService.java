@@ -108,20 +108,17 @@ public class BookingService {
         // Validações de negócio do DTO
         validateBookingData(dto);
 
-        // Verifica conflito de datas
-        if (hasDateConflict(dto.employeeId, dto.startDate, dto.endDate, null)) {
-            throw new IllegalStateException("There is already an active booking for this period.");
-        }
-
         // 1. Mapeia DTO de Request para Entidade
         Booking booking = mapper.toEntity(dto);
 
-        // 2. Lógica de Negócio: Cálculo de dias
-        if (booking.startDate != null && booking.endDate != null) {
-            booking.daysReserved = calculator.calculateBusinessDays(
-                    booking.startDate,
-                    booking.endDate
-            );
+        // 2. Lógica de Negócio: Calcula a data final com base nos dias úteis solicitados
+        if (booking.startDate != null && booking.daysReserved != null) {
+            booking.endDate = calculator.calculateEndDate(booking.startDate, booking.daysReserved);
+        }
+
+        // Verifica conflito de datas após calcular endDate
+        if (hasDateConflict(dto.employeeId, booking.startDate, booking.endDate, null)) {
+            throw new IllegalStateException("There is already an active booking for this period.");
         }
 
         // 3. Define status inicial
@@ -150,20 +147,17 @@ public class BookingService {
         // Validações de negócio
         validateBookingData(dto);
 
-        // Verifica conflito de datas (excluindo o próprio booking)
-        if (hasDateConflict(dto.employeeId, dto.startDate, dto.endDate, id)) {
-            throw new IllegalStateException("There is already an active booking for this period.");
-        }
-
         // 1. Mapeia DTO de Request para atualizar a Entidade
         mapper.updateEntity(booking, dto);
 
-        // 2. Lógica de Negócio: Recálculo de dias se as datas mudaram
-        if (booking.startDate != null && booking.endDate != null) {
-            booking.daysReserved = calculator.calculateBusinessDays(
-                    booking.startDate,
-                    booking.endDate
-            );
+        // 2. Lógica de Negócio: Recalcula a data final com base nos dias úteis solicitados
+        if (booking.startDate != null && booking.daysReserved != null) {
+            booking.endDate = calculator.calculateEndDate(booking.startDate, booking.daysReserved);
+        }
+
+        // Verifica conflito de datas após recalcular endDate (excluindo o próprio booking)
+        if (hasDateConflict(dto.employeeId, booking.startDate, booking.endDate, id)) {
+            throw new IllegalStateException("There is already an active booking for this period.");
         }
 
         // Persistência (Panache faz o update no fim do @Transactional)
@@ -244,17 +238,17 @@ public class BookingService {
     }
 
     private void validateBookingData(BookingRequest dto) {
-        if (dto.startDate == null || dto.endDate == null) {
-            throw new IllegalArgumentException("Start date and end date are required.");
+        if (dto.employeeId == null) {
+            throw new IllegalArgumentException("Employee ID is required.");
         }
-        if (dto.startDate.isAfter(dto.endDate)) {
-            throw new IllegalArgumentException("Start date cannot be after end date.");
+        if (dto.startDate == null) {
+            throw new IllegalArgumentException("Start date is required.");
+        }
+        if (dto.daysReserved == null || dto.daysReserved <= 0) {
+            throw new IllegalArgumentException("Days reserved must be greater than zero.");
         }
         if (dto.startDate.isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("Cannot create booking for past dates.");
-        }
-        if (dto.employeeId == null) {
-            throw new IllegalArgumentException("Employee ID is required.");
         }
     }
 

@@ -19,4 +19,3 @@ ALTER TABLE vacation_booking
 -- Altera o status padrão para RESERVED ao invés de PENDING
 ALTER TABLE vacation_booking
     ALTER COLUMN booking_status SET DEFAULT 'RESERVED';
-
