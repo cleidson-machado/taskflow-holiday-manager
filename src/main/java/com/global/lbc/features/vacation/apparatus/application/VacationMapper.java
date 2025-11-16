@@ -2,17 +2,17 @@ package com.global.lbc.features.vacation.apparatus.application;
 
 import com.global.lbc.features.employee.apparatus.model.Employee;
 import com.global.lbc.features.vacation.apparatus.application.dto.EmployeeResponseSummary;
-import com.global.lbc.features.vacation.apparatus.application.dto.VacationRequest; // Adicionado para conversão de entrada
+import com.global.lbc.features.vacation.apparatus.application.dto.VacationRequest; // Added for input conversion
 import com.global.lbc.features.vacation.apparatus.application.dto.VacationResponse;
 import com.global.lbc.features.vacation.apparatus.model.Vacation;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.NotFoundException; // Para lançar erro se o Employee não for encontrado
+import jakarta.ws.rs.NotFoundException; // To throw error if Employee is not found
 
 @ApplicationScoped
 public class VacationMapper {
 
     // =======================================================
-    // 1. Mapeamento para DTO (RESPONSE)
+    // 1. Mapping to DTO (RESPONSE)
     // =======================================================
 
     public VacationResponse toResponse(Vacation entity) {
@@ -22,7 +22,7 @@ public class VacationMapper {
 
         VacationResponse response = new VacationResponse();
 
-        // Mapeamento dos campos simples
+        // Mapping simple fields
         response.id = entity.id;
         response.startDate = entity.startDate;
         response.endDate = entity.endDate;
@@ -34,15 +34,15 @@ public class VacationMapper {
         response.requestNotes = entity.requestNotes;
         response.rejectionReason = entity.rejectionReason;
 
-        // Mapeamento dos campos private (via getter)
+        // Mapping private fields (via getter)
         response.createdAt = entity.getCreatedAt();
         response.updatedAt = entity.getUpdatedAt();
 
-        // Mapeamento do Soft Delete
+        // Mapping Soft Delete fields
         response.deletedAt = entity.deletedAt;
         response.deletedBy = entity.deletedBy;
 
-        // Mapeamento do Objeto Aninhado (o "JSON Rico")
+        // Mapping Nested Object (the "Rich JSON")
         if (entity.employee != null) {
             response.employee = mapEmployeeToSummary(entity.employee);
         }
@@ -51,7 +51,7 @@ public class VacationMapper {
     }
 
     private EmployeeResponseSummary mapEmployeeToSummary(Employee employee) {
-        // Assume que a entidade Employee tem os campos públicos para acesso
+        // Assumes the Employee entity has public fields for access
         return new EmployeeResponseSummary(
                 employee.id,
                 employee.name,
@@ -61,17 +61,17 @@ public class VacationMapper {
     }
 
     // =======================================================
-    // 2. Mapeamento para Entidade (REQUEST - Criação)
+    // 2. Mapping to Entity (REQUEST - Creation)
     // =======================================================
 
     public Vacation toEntity(VacationRequest dto) {
         Vacation entity = new Vacation();
 
-        // Busca a entidade Employee para o relacionamento (Foreign Key)
+        // Fetches the Employee entity for the relationship (Foreign Key)
         if (dto.employeeId != null) {
             Employee employee = Employee.findById(dto.employeeId);
             if (employee == null) {
-                // Devemos garantir que apenas IDs válidos sejam persistidos
+                // We must ensure that only valid IDs are persisted
                 throw new NotFoundException("Employee not found with ID: " + dto.employeeId);
             }
             entity.employee = employee;
@@ -82,19 +82,19 @@ public class VacationMapper {
         entity.startDate = dto.startDate;
         entity.endDate = dto.endDate;
         entity.requestNotes = dto.requestNotes;
-        // Campos de status/dias são definidos pelo Service/Entidade
+        // Status/days fields are set by Service/Entity
 
         return entity;
     }
 
     // =======================================================
-    // 3. Mapeamento para Atualização da Entidade (UPDATE)
+    // 3. Mapping for Entity Update ('UPDATE')
     // =======================================================
 
     public void updateEntity(Vacation entity, VacationRequest dto) {
-        // Atualiza campos que fazem sentido serem alterados via UPDATE Request
+        // Updates fields that make sense to be changed via 'UPDATE' Request
 
-        // Se o Employee ID for passado e for diferente do atual, atualiza o relacionamento
+        // If Employee 'ID' is passed and is different from current, updates the relationship
         if (dto.employeeId != null && !dto.employeeId.equals(entity.employee.id)) {
             Employee newEmployee = Employee.findById(dto.employeeId);
             if (newEmployee == null) {
@@ -103,13 +103,13 @@ public class VacationMapper {
             entity.employee = newEmployee;
         }
 
-        // Atualiza datas
+        // Updates dates
         entity.startDate = dto.startDate;
         entity.endDate = dto.endDate;
 
-        // Atualiza notas
+        // Updates notes
         entity.requestNotes = dto.requestNotes;
 
-        // Nota: O Service é responsável pelo recálculo de daysRequested se as datas mudarem.
+        // Note: The Service is responsible for recalculating daysRequested if dates change.
     }
 }
