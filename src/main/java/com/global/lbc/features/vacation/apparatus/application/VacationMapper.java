@@ -8,6 +8,28 @@ import com.global.lbc.features.vacation.apparatus.model.Vacation;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.NotFoundException; // To throw error if Employee is not found
 
+/*
+ * NOTE ON ARCHITECTURAL CHOICE: FOREIGN KEY VALIDATION (Employee lookup)
+ *
+ * This Mapper technically deviates from the strict Single Responsibility Principle (SRP)
+ * by performing a database lookup (Employee.findById) and enforcing a structural
+ * business rule (Employee must exist).
+ *
+ * The choice is made for two main pragmatic reasons:
+ * 1. Fail-Fast Principle: It ensures the application throws a clean, high-level
+ * 'NotFoundException' (404/400) immediately upon invalid input, rather than
+ * deferring the check to the Service Layer or relying on a low-level database
+ * Constraint Violation Exception when trying to persist the entity.
+ * 2. Object Construction Necessity: The Vacation entity requires a fully loaded
+ * Employee object (not just the ID) to establish its relationship. The Mapper,
+ * responsible for building the valid Entity from the DTO, must handle this
+ * conversion (ID -> Entity) and validate the ID's existence concurrently.
+ *
+ * For simpler, structural integrity checks (like Foreign Key existence), this approach
+ * prioritizes code conciseness and clear error reporting over pure architectural layering.
+ * Complex business rules (e.g., checking vacation balance) should remain in the Service Layer.
+ */
+
 @ApplicationScoped
 public class VacationMapper {
 
